@@ -17,6 +17,7 @@ double simpson(double a, double b, int n)
     sum += f(a);
     sum += f(b);
 
+#pragma omp parallel for reduction(+ : sum)
     for (int i = 1; i < n; i++)
     {
         double x = a + i * step;
@@ -45,7 +46,17 @@ double runge(double a, double b, double eps, int &n)
 
 int main()
 {
-    int n;
-    double result = runge(-1, 1, 1e-6, n);
-    std::cout << "Result: " << result << " | num of steps: " << n << "\n";
+    int threads[6] = {1, 2, 4, 16, 32, 64};
+    int n = 2 * 10e7;
+
+    std::cout << std::setprecision(10);
+
+    for (auto thread : threads)
+    {
+        omp_set_num_threads(thread);
+        double t0 = omp_get_wtime();
+        double result = simpson(-1, 1, n);
+        double t1 = omp_get_wtime();
+        std::cout << thread << " threads: " << t1 - t0 << "s, answer " << result << "\n";
+    }
 }
