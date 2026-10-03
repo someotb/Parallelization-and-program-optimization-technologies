@@ -60,6 +60,8 @@ double runge(double a, double b, double eps, int &n)
 int main()
 {
     std::string path = "data/result.csv";
+    std::ofstream(path, std::ios::trunc); 
+
     int threads[6] = {1, 2, 4, 16, 32, 64};
     int n = 2 * 10e7;
 
