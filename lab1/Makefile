@@ -14,12 +14,15 @@ TARGET = $(BUILD)/main
 all: $(TARGET)
 
 $(TARGET): $(SRC) | $(BUILD)
-	$(CXX) $(CXXFLAGS) $< -o $@
+	@$(CXX) $(CXXFLAGS) $< -o $@
 
 $(BUILD):
-	mkdir -p $(BUILD)
+	@mkdir -p $(BUILD)
+
+run: $(TARGET)
+	@./${TARGET}
 
 clean:
-	rm -rf $(BUILD)
+	@rm -rf $(BUILD)
 
-.PHONY: all clean
+.PHONY: all run clean
