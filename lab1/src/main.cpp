@@ -3,6 +3,19 @@
 #include <stdio.h>
 #include <cmath>
 #include <iomanip>
+#include <fstream>
+#include <string>
+
+void write_file(const std::string &path, int threads, double time)
+{
+    std::ofstream out(path, std::ios::app);
+    if (!out.is_open())
+    {
+        std::cerr << "Failed to open " << path << "\n";
+        return;
+    }
+    out << threads << "," << time << "\n";
+}
 
 double f(double x)
 {
@@ -46,6 +59,7 @@ double runge(double a, double b, double eps, int &n)
 
 int main()
 {
+    std::string path = "data/result.csv";
     int threads[6] = {1, 2, 4, 16, 32, 64};
     int n = 2 * 10e7;
 
@@ -58,5 +72,6 @@ int main()
         double result = simpson(-1, 1, n);
         double t1 = omp_get_wtime();
         std::cout << thread << " threads: " << t1 - t0 << "s, answer " << result << "\n";
+        write_file(path, thread, t1 - t0);
     }
 }

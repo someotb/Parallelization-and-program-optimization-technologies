@@ -1,4 +1,2 @@
-*
-!*/
-!*.cpp
-!*.md
+.venv
+build
