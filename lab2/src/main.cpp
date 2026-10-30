@@ -38,13 +38,12 @@ std::vector<double> band_to_string(size_t k, size_t rows, size_t cols,
 
   for (size_t band_start = 0; band_start < rows; band_start += k) {
     size_t band_end = std::min(rows, band_start + k);
-    double res = 0;
-#pragma omp parallel for reduction(+ : res)
+#pragma omp parallel for
     for (size_t row = band_start; row < band_end; ++row) {
+      double res = 0;
       for (size_t col = 0; col < cols; ++col)
         res += matrix[row][col] * vector[col];
       result[row] = res;
-      res = 0.0;
     }
   }
   return result;
