@@ -49,6 +49,24 @@ std::vector<double> band_to_string(size_t k, size_t rows, size_t cols,
   return result;
 }
 
+std::vector<double> band_to_column(size_t k, size_t rows, size_t cols,
+                                   std::vector<std::vector<double>> &matrix,
+                                   std::vector<double> &vector) {
+  std::vector<double> result(rows, 0);
+
+  for (size_t band_start = 0; band_start < cols; band_start += k) {
+    size_t band_end = std::min(cols, band_start + k);
+#pragma omp parallel for
+    for (size_t row = 0; row < rows; ++row) {
+      double res = 0;
+      for (size_t col = band_start; col < band_end; ++col)
+        res += matrix[row][col] * vector[col];
+      result[row] = res;
+    }
+  }
+  return result;
+}
+
 int main() {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -57,7 +75,7 @@ int main() {
   size_t cols = 0;
   size_t rows = 0;
 
-  std::cout << "Matrix:\nEnter num of columns(vector size too): ";
+  std::cout << "Matrix:\nEnter num of columns(it will be vector size too): ";
   std::cin >> cols;
 
   std::cout << "Enter num of rows: ";
@@ -77,17 +95,26 @@ int main() {
   size_t k = 0;
   std::cout << "Enter band width: ";
   std::cin >> k;
-  if (k == 0)
+  if (k <= 0)
     k = 1;
+
+  double t0 = 0.0;
+  double t1 = 0.0;
+  std::vector<double> result;
 
   std::string path = "data/result.csv";
   std::ofstream(path, std::ios::trunc);
   int threads[6] = {1, 2, 4, 16, 32, 64};
   for (auto thread : threads) {
     omp_set_num_threads(thread);
-    double t0 = omp_get_wtime();
-    auto result = band_to_string(k, rows, cols, matrix, vector);
-    double t1 = omp_get_wtime();
+    t0 = omp_get_wtime();
+    result = band_to_string(k, rows, cols, matrix, vector);
+    t1 = omp_get_wtime();
+    write_file(path, thread, t1 - t0);
+
+    t0 = omp_get_wtime();
+    result = band_to_column(k, rows, cols, matrix, vector);
+    t1 = omp_get_wtime();
     write_file(path, thread, t1 - t0);
   }
 
