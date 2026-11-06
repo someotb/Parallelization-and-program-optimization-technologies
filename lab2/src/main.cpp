@@ -67,6 +67,27 @@ std::vector<double> band_to_column(size_t k, size_t rows, size_t cols,
   return result;
 }
 
+std::vector<double> band_to_block(size_t p, size_t q, size_t rows, size_t cols,
+                                  std::vector<std::vector<double>> &matrix,
+                                  std::vector<double> &vector) {
+  std::vector<double> result(rows, 0);
+
+  for (size_t row_start = 0; row_start < rows; row_start += p) {
+    size_t row_end = std::min(rows, row_start + p);
+#pragma omp parallel for
+    for (size_t row = row_start; row < row_end; ++row) {
+      double res = 0;
+      for (size_t col_start = 0; col_start < cols; col_start += q) {
+        size_t col_end = std::min(cols, col_start + q);
+        for (size_t col = col_start; col < col_end; ++col)
+          res += matrix[row][col] * vector[col];
+      }
+      result[row] = res;
+    }
+  }
+  return result;
+}
+
 int main() {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -98,6 +119,17 @@ int main() {
   if (k <= 0)
     k = 1;
 
+  size_t p = 0;
+  size_t q = 0;
+  std::cout << "Enter block size p:";
+  std::cin >> p;
+  if (p <= 0)
+    p = 1;
+  std::cout << "Enter block size q:";
+  std::cin >> q;
+  if (q <= 0)
+    q = 1;
+
   double t0 = 0.0;
   double t1 = 0.0;
   std::vector<double> result;
@@ -114,6 +146,11 @@ int main() {
 
     t0 = omp_get_wtime();
     result = band_to_column(k, rows, cols, matrix, vector);
+    t1 = omp_get_wtime();
+    write_file(path, thread, t1 - t0);
+
+    t0 = omp_get_wtime();
+    result = band_to_block(p, q, rows, cols, matrix, vector);
     t1 = omp_get_wtime();
     write_file(path, thread, t1 - t0);
   }
